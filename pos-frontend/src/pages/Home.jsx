@@ -1,6 +1,7 @@
 import React from "react";
 import Greetings from "../components/home/Greetings";
 import MiniCard from "../components/home/MiniCard";
+import RecentOrders from "../components/home/RecentOrders";
 
 const Home = () => {
     return (
@@ -15,6 +16,9 @@ const Home = () => {
                 
                 {/* Mini Cards for Key Metrics */}
                 <MiniCard />
+                
+                {/* Recent Orders */}
+                <RecentOrders />
                 
                 {/* Feature Cards */}
                 <div className="bg-gray-900 rounded-2xl shadow-lg p-6">
