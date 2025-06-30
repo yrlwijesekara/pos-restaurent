@@ -2,6 +2,7 @@ import React from "react";
 import Greetings from "../components/home/Greetings";
 import MiniCard from "../components/home/MiniCard";
 import RecentOrders from "../components/home/RecentOrders";
+import PopularDishes from "../components/home/PopularDishes";
 
 const Home = () => {
     return (
@@ -62,84 +63,9 @@ const Home = () => {
                 </div>
             </div>
 
-            {/* Right Section - Quick Stats */}
+            {/* Right Section - Popular Dishes */}
             <div className="flex-1 bg-gray-900 rounded-2xl shadow-lg p-6 overflow-y-auto scrollbar-hide">
-                <div className="text-center mb-8">
-                    <h2 className="text-3xl font-bold text-white mb-4">
-                        📈 Today's Performance
-                    </h2>
-                    <p className="text-lg text-gray-300">
-                        Real-time business metrics
-                    </p>
-                </div>
-                
-                <div className="space-y-4 pb-4">
-                    <div className="bg-gradient-to-r from-green-900/50 to-green-800/50 border border-green-700 text-white p-6 rounded-xl">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <h4 className="text-lg font-semibold text-green-300">Total Sales</h4>
-                                <p className="text-3xl font-bold">$2,845.50</p>
-                                <p className="text-sm text-green-400">+12% from yesterday</p>
-                            </div>
-                            <div className="text-4xl">💰</div>
-                        </div>
-                    </div>
-                    
-                    <div className="bg-gradient-to-r from-blue-900/50 to-blue-800/50 border border-blue-700 text-white p-6 rounded-xl">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <h4 className="text-lg font-semibold text-blue-300">Orders Completed</h4>
-                                <p className="text-3xl font-bold">47</p>
-                                <p className="text-sm text-blue-400">3 pending orders</p>
-                            </div>
-                            <div className="text-4xl">🛍️</div>
-                        </div>
-                    </div>
-                    
-                    <div className="bg-gradient-to-r from-purple-900/50 to-purple-800/50 border border-purple-700 text-white p-6 rounded-xl">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <h4 className="text-lg font-semibold text-purple-300">Active Tables</h4>
-                                <p className="text-3xl font-bold">12/20</p>
-                                <p className="text-sm text-purple-400">8 tables available</p>
-                            </div>
-                            <div className="text-4xl">🪑</div>
-                        </div>
-                    </div>
-                    
-                    <div className="bg-gradient-to-r from-orange-900/50 to-orange-800/50 border border-orange-700 text-white p-6 rounded-xl">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <h4 className="text-lg font-semibold text-orange-300">Average Order</h4>
-                                <p className="text-3xl font-bold">$60.50</p>
-                                <p className="text-sm text-orange-400">+5% increase</p>
-                            </div>
-                            <div className="text-4xl">📊</div>
-                        </div>
-                    </div>
-                    
-                    <div className="bg-gradient-to-r from-indigo-900/50 to-indigo-800/50 border border-indigo-700 text-white p-6 rounded-xl">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <h4 className="text-lg font-semibold text-indigo-300">Customer Satisfaction</h4>
-                                <p className="text-3xl font-bold">4.8★</p>
-                                <p className="text-sm text-indigo-400">Based on 127 reviews</p>
-                            </div>
-                            <div className="text-4xl">⭐</div>
-                        </div>
-                    </div>
-                    
-                    <div className="bg-gradient-to-r from-red-900/50 to-red-800/50 border border-red-700 text-white p-6 rounded-xl">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <h4 className="text-lg font-semibold text-red-300">Peak Hours</h4>
-                                <p className="text-3xl font-bold">7-9 PM</p>
-                                <p className="text-sm text-red-400">Busiest time today</p>
-                            </div>
-                            <div className="text-4xl">⏰</div>
-                        </div>
-                    </div>
-                </div>
+                <PopularDishes />
             </div>
         </div>
     );
