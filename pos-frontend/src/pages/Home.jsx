@@ -1,5 +1,6 @@
 import React from "react";
 import Greetings from "../components/home/Greetings";
+import MiniCard from "../components/home/MiniCard";
 
 const Home = () => {
     return (
@@ -12,6 +13,9 @@ const Home = () => {
                 {/* Greetings Component */}
                 <Greetings />
                 
+                {/* Mini Cards for Key Metrics */}
+                <MiniCard />
+                
                 {/* Feature Cards */}
                 <div className="bg-gray-900 rounded-2xl shadow-lg p-6">
                     <h2 className="text-2xl font-bold text-white mb-6">
@@ -19,11 +23,7 @@ const Home = () => {
                     </h2>
                     
                     <div className="grid grid-cols-1 gap-4">
-                        <div className="bg-gray-800 p-4 rounded-lg text-center border border-gray-700 hover:border-blue-500 transition-all duration-200 cursor-pointer">
-                            <div className="text-3xl mb-3">📊</div>
-                            <h3 className="text-lg font-semibold text-white mb-2">Dashboard</h3>
-                            <p className="text-gray-400 text-sm">View sales analytics and reports</p>
-                        </div>
+                        
                         
                         <div className="bg-gray-800 p-4 rounded-lg text-center border border-gray-700 hover:border-blue-500 transition-all duration-200 cursor-pointer">
                             <div className="text-3xl mb-3">🍽️</div>
