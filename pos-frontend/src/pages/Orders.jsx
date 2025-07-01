@@ -230,14 +230,7 @@ const Orders = () => {
                         </div>
                         
                         
-                        {/* Stats Pills */}
-                        <div className="flex justify-center space-x-4 mt-6">
-                            
-                            <div className="bg-gray-800 border border-gray-700 rounded-full px-4 py-2 flex items-center space-x-2">
-                                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                                <span className="text-gray-300 text-sm">{orders.length} Active Orders</span>
-                            </div>
-                        </div>
+                       
                     </div>
                 </div>
 
