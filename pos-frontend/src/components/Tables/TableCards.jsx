@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { FiUsers, FiClock, FiMapPin, FiCheck, FiX, FiEdit } from 'react-icons/fi';
+import { FiUsers, FiClock, FiMapPin, FiCheck, FiX, FiEdit, FiTrash2 } from 'react-icons/fi';
 
-const TableCards = ({ table, onBook, onCancel, onEdit }) => {
+const TableCards = ({ table, onBook, onCancel, onEdit, onDelete }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [bookingData, setBookingData] = useState({
     customerName: '',
     phone: '',
@@ -29,8 +30,6 @@ const TableCards = ({ table, onBook, onCancel, onEdit }) => {
         return 'bg-red-900 text-red-100 border-red-700';
       case 'occupied':
         return 'bg-yellow-900 text-yellow-100 border-yellow-700';
-      case 'reserved':
-        return 'bg-blue-900 text-blue-100 border-blue-700';
       default:
         return 'bg-gray-700 text-gray-100 border-gray-600';
     }
@@ -84,6 +83,19 @@ const TableCards = ({ table, onBook, onCancel, onEdit }) => {
     });
   };
 
+  const handleDeleteTable = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    onDelete(table.id);
+    setShowDeleteConfirm(false);
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
+  };
+
   const formatTime = (timeString) => {
     if (!timeString) return '';
     return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
@@ -121,12 +133,22 @@ const TableCards = ({ table, onBook, onCancel, onEdit }) => {
             >
               {table.status}
             </span>
-            <button
-              onClick={handleEditTable}
-              className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              <FiEdit className="text-lg" />
-            </button>
+            <div className="flex space-x-1">
+              <button
+                onClick={handleEditTable}
+                className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                title="Edit Table"
+              >
+                <FiEdit className="text-lg" />
+              </button>
+              <button
+                onClick={handleDeleteTable}
+                className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
+                title="Delete Table"
+              >
+                <FiTrash2 className="text-lg" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -418,6 +440,42 @@ const TableCards = ({ table, onBook, onCancel, onEdit }) => {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="border-t border-gray-700 bg-red-900/10 p-6">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FiTrash2 className="text-white text-2xl" />
+            </div>
+            <h4 className="text-white font-medium mb-2">Delete Table {table.number}?</h4>
+            <p className="text-gray-400 text-sm mb-6">
+              This action cannot be undone. All table data will be permanently removed.
+              {table.status !== 'available' && table.booking && (
+                <span className="block mt-2 text-yellow-400 font-medium">
+                  ⚠️ This table has an active booking that will also be deleted.
+                </span>
+              )}
+            </p>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={handleDeleteConfirm}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+              >
+                <FiTrash2 className="text-lg" />
+                <span>Delete Table</span>
+              </button>
+              <button
+                onClick={handleDeleteCancel}
+                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

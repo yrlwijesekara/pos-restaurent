@@ -77,7 +77,7 @@ const Tables = () => {
                 capacity: 8,
                 location: 'Private Room',
                 type: 'VIP',
-                status: 'reserved',
+                status: 'booked',
                 features: ['Private Room', 'Sound System', 'Projector'],
                 createdAt: new Date().getTime() - 345600000,
                 updatedAt: new Date().getTime() - 600000,
@@ -182,12 +182,15 @@ const Tables = () => {
         ));
     };
 
+    const handleDeleteTable = (tableId) => {
+        setTables(tables.filter(table => table.id !== tableId));
+    };
+
     const filterOptions = [
         { key: 'all', label: 'All Tables', count: tables.length },
         { key: 'available', label: 'Available', count: tables.filter(t => t.status === 'available').length },
         { key: 'booked', label: 'Booked', count: tables.filter(t => t.status === 'booked').length },
-        { key: 'occupied', label: 'Occupied', count: tables.filter(t => t.status === 'occupied').length },
-        { key: 'reserved', label: 'Reserved', count: tables.filter(t => t.status === 'reserved').length }
+        { key: 'occupied', label: 'Occupied', count: tables.filter(t => t.status === 'occupied').length }
     ];
 
     return (
@@ -362,6 +365,7 @@ const Tables = () => {
                                 onBook={handleBookTable}
                                 onCancel={handleCancelBooking}
                                 onEdit={handleEditTable}
+                                onDelete={handleDeleteTable}
                             />
                         ))
                     ) : (
@@ -384,7 +388,7 @@ const Tables = () => {
                 {filteredTables.length > 0 && (
                     <div className="mt-8 bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
                         <h3 className="text-lg font-semibold text-white mb-4">Tables Summary</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             <div className="text-center">
                                 <p className="text-2xl font-bold text-green-400">
                                     {tables.filter(t => t.status === 'available').length}
@@ -403,11 +407,21 @@ const Tables = () => {
                                 </p>
                                 <p className="text-gray-400">Occupied</p>
                             </div>
+                        </div>
+                        
+                        {/* Additional stats row */}
+                        <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-700">
                             <div className="text-center">
                                 <p className="text-2xl font-bold text-blue-400">
                                     {tables.reduce((sum, table) => sum + table.capacity, 0)}
                                 </p>
                                 <p className="text-gray-400">Total Capacity</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-2xl font-bold text-purple-400">
+                                    {Math.round((tables.filter(t => t.status !== 'available').length / tables.length) * 100) || 0}%
+                                </p>
+                                <p className="text-gray-400">Occupancy Rate</p>
                             </div>
                         </div>
                     </div>
