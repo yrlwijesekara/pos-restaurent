@@ -4,6 +4,7 @@ import { FiUsers, FiClock, FiMapPin, FiCheck, FiX, FiEdit } from 'react-icons/fi
 const TableCards = ({ table, onBook, onCancel, onEdit }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showBookingForm, setShowBookingForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
   const [bookingData, setBookingData] = useState({
     customerName: '',
     phone: '',
@@ -11,6 +12,13 @@ const TableCards = ({ table, onBook, onCancel, onEdit }) => {
     time: '',
     date: '',
     notes: ''
+  });
+  const [editData, setEditData] = useState({
+    number: table.number,
+    capacity: table.capacity,
+    location: table.location,
+    type: table.type,
+    features: table.features || []
   });
 
   const getStatusColor = (status) => {
@@ -45,6 +53,34 @@ const TableCards = ({ table, onBook, onCancel, onEdit }) => {
       time: '',
       date: '',
       notes: ''
+    });
+  };
+
+  const handleEditTable = () => {
+    setShowEditForm(true);
+    setEditData({
+      number: table.number,
+      capacity: table.capacity,
+      location: table.location,
+      type: table.type,
+      features: table.features || []
+    });
+  };
+
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    onEdit(table.id, editData);
+    setShowEditForm(false);
+  };
+
+  const handleEditCancel = () => {
+    setShowEditForm(false);
+    setEditData({
+      number: table.number,
+      capacity: table.capacity,
+      location: table.location,
+      type: table.type,
+      features: table.features || []
     });
   };
 
@@ -86,7 +122,7 @@ const TableCards = ({ table, onBook, onCancel, onEdit }) => {
               {table.status}
             </span>
             <button
-              onClick={() => onEdit(table)}
+              onClick={handleEditTable}
               className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
             >
               <FiEdit className="text-lg" />
@@ -205,6 +241,7 @@ const TableCards = ({ table, onBook, onCancel, onEdit }) => {
         <div className="border-t border-gray-700 bg-gray-900 p-6">
           <h4 className="text-white font-medium mb-4">Book Table {table.number}</h4>
           <form onSubmit={handleBookingSubmit} className="space-y-4">
+            {/* ...existing booking form code... */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-gray-400 text-sm mb-1">Customer Name</label>
@@ -284,6 +321,97 @@ const TableCards = ({ table, onBook, onCancel, onEdit }) => {
               <button
                 type="button"
                 onClick={() => setShowBookingForm(false)}
+                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Edit Table Form Modal */}
+      {showEditForm && (
+        <div className="border-t border-gray-700 bg-gray-900 p-6">
+          <h4 className="text-white font-medium mb-4">Edit Table {table.number}</h4>
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-400 text-sm mb-1">Table Number</label>
+                <input
+                  type="text"
+                  required
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={editData.number}
+                  onChange={(e) => setEditData({...editData, number: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="block text-gray-400 text-sm mb-1">Capacity</label>
+                <select
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={editData.capacity}
+                  onChange={(e) => setEditData({...editData, capacity: parseInt(e.target.value)})}
+                >
+                  {[2,4,6,8,10,12].map(num => (
+                    <option key={num} value={num}>{num} people</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-400 text-sm mb-1">Location</label>
+                <select
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={editData.location}
+                  onChange={(e) => setEditData({...editData, location: e.target.value})}
+                  required
+                >
+                  <option value="">Select Location</option>
+                  <option value="Main Dining">Main Dining</option>
+                  <option value="Patio">Patio</option>
+                  <option value="Private Room">Private Room</option>
+                  <option value="Bar Area">Bar Area</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-gray-400 text-sm mb-1">Type</label>
+                <select
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={editData.type}
+                  onChange={(e) => setEditData({...editData, type: e.target.value})}
+                >
+                  <option value="Standard">Standard</option>
+                  <option value="Premium">Premium</option>
+                  <option value="VIP">VIP</option>
+                </select>
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-gray-400 text-sm mb-1">Features (Optional)</label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="e.g., Window View, Quiet Corner (separate with commas)"
+                value={editData.features.join(', ')}
+                onChange={(e) => setEditData({...editData, features: e.target.value.split(',').map(f => f.trim()).filter(f => f !== '')})}
+              />
+              <p className="text-gray-500 text-xs mt-1">Current features will be replaced with new ones</p>
+            </div>
+            
+            <div className="flex space-x-3">
+              <button
+                type="submit"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+              >
+                Save Changes
+              </button>
+              <button
+                type="button"
+                onClick={handleEditCancel}
                 className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
               >
                 Cancel

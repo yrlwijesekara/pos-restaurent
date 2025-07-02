@@ -170,9 +170,16 @@ const Tables = () => {
         ));
     };
 
-    const handleEditTable = (table) => {
-        // Implementation for editing table details
-        console.log('Edit table:', table);
+    const handleEditTable = (tableId, editData) => {
+        setTables(tables.map(table => 
+            table.id === tableId 
+                ? { 
+                    ...table, 
+                    ...editData,
+                    updatedAt: new Date().getTime() 
+                }
+                : table
+        ));
     };
 
     const filterOptions = [
