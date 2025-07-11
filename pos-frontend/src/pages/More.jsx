@@ -1,9 +1,19 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { IoSettings, IoPersonCircle, IoLogOut, IoStatsChart, IoHelpCircle, IoNotifications } from 'react-icons/io5';
 import { MdInventory, MdPayments, MdRestaurant } from 'react-icons/md';
+import { BiSolidDish } from 'react-icons/bi';
 
 const More = () => {
+  const navigate = useNavigate();
+  
   const menuItems = [
+    {
+      icon: BiSolidDish,
+      title: 'View Menu',
+      description: 'Browse food and beverage menu',
+      action: () => navigate('/menu')
+    },
     {
       icon: IoPersonCircle,
       title: 'Profile',
