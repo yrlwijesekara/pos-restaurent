@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FiUsers, FiClock, FiMapPin, FiCheck, FiX, FiEdit, FiTrash2 } from 'react-icons/fi';
+import { BiSolidDish } from 'react-icons/bi';
 
 const TableCards = ({ table, onBook, onCancel, onEdit, onDelete }) => {
+  const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -96,6 +99,68 @@ const TableCards = ({ table, onBook, onCancel, onEdit, onDelete }) => {
     setShowDeleteConfirm(false);
   };
 
+  // Navigation functions for menu access
+  const handleGoToMenu = () => {
+    const tableInfo = {
+      id: table.id,
+      number: table.number,
+      capacity: table.capacity,
+      location: table.location,
+      status: table.status
+    };
+
+    navigate('/menu', {
+      state: {
+        tableInfo: tableInfo,
+        customerInfo: null
+      }
+    });
+  };
+
+  const handleCustomerArrival = (booking) => {
+    const tableInfo = {
+      id: table.id,
+      number: table.number,
+      capacity: table.capacity,
+      location: table.location,
+      status: 'occupied'
+    };
+
+    const customerInfo = {
+      name: booking.customerName,
+      mobile: booking.phone,
+      guests: booking.guests,
+      bookingTime: booking.time,
+      bookingDate: booking.date
+    };
+
+    navigate('/menu', {
+      state: {
+        tableInfo: tableInfo,
+        customerInfo: customerInfo,
+        isCustomerArrival: true
+      }
+    });
+  };
+
+  const handleWalkInOrder = () => {
+    const tableInfo = {
+      id: table.id,
+      number: table.number,
+      capacity: table.capacity,
+      location: table.location,
+      status: 'occupied'
+    };
+
+    navigate('/menu', {
+      state: {
+        tableInfo: tableInfo,
+        customerInfo: null,
+        isWalkIn: true
+      }
+    });
+  };
+
   const formatTime = (timeString) => {
     if (!timeString) return '';
     return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
@@ -165,32 +230,32 @@ const TableCards = ({ table, onBook, onCancel, onEdit, onDelete }) => {
         </div>
 
         {/* Booking Info (if booked) */}
-        {table.status !== 'available' && table.booking && (
+        {table.status !== 'available' && table.currentBooking && (
           <div className="bg-gray-900 rounded-lg p-4 mb-4">
             <h4 className="text-white font-medium mb-2">Current Booking</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-400">Customer:</span>
-                <span className="text-white">{table.booking.customerName}</span>
+                <span className="text-white">{table.currentBooking.customerName}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Phone:</span>
-                <span className="text-white">{table.booking.phone}</span>
+                <span className="text-white">{table.currentBooking.phone}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Guests:</span>
-                <span className="text-white">{table.booking.guests}</span>
+                <span className="text-white">{table.currentBooking.guests}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Time:</span>
                 <span className="text-white">
-                  {table.booking.date} at {formatTime(table.booking.time)}
+                  {table.currentBooking.date} at {formatTime(table.currentBooking.time)}
                 </span>
               </div>
-              {table.booking.notes && (
+              {table.currentBooking.notes && (
                 <div className="mt-2">
                   <span className="text-gray-400">Notes:</span>
-                  <p className="text-white mt-1">{table.booking.notes}</p>
+                  <p className="text-white mt-1">{table.currentBooking.notes}</p>
                 </div>
               )}
             </div>
@@ -198,28 +263,62 @@ const TableCards = ({ table, onBook, onCancel, onEdit, onDelete }) => {
         )}
 
         {/* Action Buttons */}
-        <div className="flex space-x-3">
+        <div className="flex space-x-2">
           {table.status === 'available' ? (
+            <>
+              <button
+                onClick={handleBooking}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-1 text-sm"
+              >
+                <FiCheck className="text-lg" />
+                <span>Book</span>
+              </button>
+              <button
+                onClick={handleGoToMenu}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-1 text-sm"
+              >
+                <BiSolidDish className="text-lg" />
+                <span>Menu</span>
+              </button>
+            </>
+          ) : table.status === 'booked' ? (
+            <>
+              <button
+                onClick={() => onCancel(table.id)}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-1 text-sm"
+              >
+                <FiX className="text-lg" />
+                <span>Cancel</span>
+              </button>
+              {/* Customer Arrival Button */}
+              <button
+                onClick={() => handleCustomerArrival(table.currentBooking)}
+                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-1 text-sm"
+              >
+                <BiSolidDish className="text-lg" />
+                <span>Arrived</span>
+              </button>
+            </>
+          ) : table.status === 'occupied' ? (
             <button
-              onClick={handleBooking}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+              onClick={handleWalkInOrder}
+              className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-1 text-sm"
             >
-              <FiCheck className="text-lg" />
-              <span>Book Table</span>
+              <BiSolidDish className="text-lg" />
+              <span>Order</span>
             </button>
           ) : (
             <button
-              onClick={() => onCancel(table.id)}
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+              disabled
+              className="flex-1 bg-gray-600 text-gray-400 py-2 px-3 rounded-lg font-medium cursor-not-allowed flex items-center justify-center space-x-1 text-sm"
             >
-              <FiX className="text-lg" />
-              <span>Cancel Booking</span>
+              <span>Unavailable</span>
             </button>
           )}
           
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition-colors"
+            className="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition-colors text-sm"
           >
             {isExpanded ? 'Less' : 'More'}
           </button>
@@ -453,7 +552,7 @@ const TableCards = ({ table, onBook, onCancel, onEdit, onDelete }) => {
             <h4 className="text-white font-medium mb-2">Delete Table {table.number}?</h4>
             <p className="text-gray-400 text-sm mb-6">
               This action cannot be undone. All table data will be permanently removed.
-              {table.status !== 'available' && table.booking && (
+              {table.status !== 'available' && table.currentBooking && (
                 <span className="block mt-2 text-yellow-400 font-medium">
                   ⚠️ This table has an active booking that will also be deleted.
                 </span>

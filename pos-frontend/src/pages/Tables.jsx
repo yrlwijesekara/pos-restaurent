@@ -18,8 +18,11 @@ const Tables = () => {
         features: []
     });
 
-    // Sample data - replace with actual API call
+    // Sample data with enhanced booking system - replace with actual API call
     useEffect(() => {
+        const today = new Date().toISOString().split('T')[0];
+        const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+        
         const sampleTables = [
             {
                 id: '1',
@@ -31,7 +34,8 @@ const Tables = () => {
                 features: ['Window View', 'Near Kitchen'],
                 createdAt: new Date().getTime() - 86400000,
                 updatedAt: new Date().getTime() - 3600000,
-                booking: null
+                bookings: [], // Multiple bookings support
+                currentBooking: null
             },
             {
                 id: '2',
@@ -43,11 +47,35 @@ const Tables = () => {
                 features: ['Quiet Corner'],
                 createdAt: new Date().getTime() - 172800000,
                 updatedAt: new Date().getTime() - 1800000,
-                booking: {
+                bookings: [
+                    {
+                        id: 'booking_1',
+                        customerName: 'John Smith',
+                        phone: '+1 (555) 123-4567',
+                        guests: 2,
+                        date: today,
+                        time: '19:00',
+                        notes: 'Anniversary dinner',
+                        status: 'confirmed',
+                        bookedAt: new Date().getTime() - 3600000
+                    },
+                    {
+                        id: 'booking_2',
+                        customerName: 'Mike Johnson',
+                        phone: '+1 (555) 987-6543',
+                        guests: 2,
+                        date: today,
+                        time: '21:30',
+                        notes: 'Late dinner',
+                        status: 'confirmed',
+                        bookedAt: new Date().getTime() - 1800000
+                    }
+                ],
+                currentBooking: {
                     customerName: 'John Smith',
                     phone: '+1 (555) 123-4567',
                     guests: 2,
-                    date: '2025-07-02',
+                    date: today,
                     time: '19:00',
                     notes: 'Anniversary dinner'
                 }
@@ -62,13 +90,26 @@ const Tables = () => {
                 features: ['Outdoor Seating', 'Garden View'],
                 createdAt: new Date().getTime() - 259200000,
                 updatedAt: new Date().getTime() - 900000,
-                booking: {
+                bookings: [
+                    {
+                        id: 'booking_3',
+                        customerName: 'Sarah Johnson',
+                        phone: '+1 (555) 987-6543',
+                        guests: 4,
+                        date: today,
+                        time: '18:30',
+                        notes: 'Family dinner',
+                        status: 'arrived',
+                        bookedAt: new Date().getTime() - 7200000
+                    }
+                ],
+                currentBooking: {
                     customerName: 'Sarah Johnson',
                     phone: '+1 (555) 987-6543',
                     guests: 4,
-                    date: '2025-07-02',
+                    date: today,
                     time: '18:30',
-                    notes: 'Birthday celebration'
+                    notes: 'Family dinner'
                 }
             },
             {
@@ -81,11 +122,24 @@ const Tables = () => {
                 features: ['Private Room', 'Sound System', 'Projector'],
                 createdAt: new Date().getTime() - 345600000,
                 updatedAt: new Date().getTime() - 600000,
-                booking: {
+                bookings: [
+                    {
+                        id: 'booking_4',
+                        customerName: 'Corporate Event',
+                        phone: '+1 (555) 456-7890',
+                        guests: 8,
+                        date: '2025-01-03',
+                        time: '12:00',
+                        notes: 'Business lunch meeting',
+                        status: 'confirmed',
+                        bookedAt: new Date().getTime() - 86400000
+                    }
+                ],
+                currentBooking: {
                     customerName: 'Corporate Event',
                     phone: '+1 (555) 456-7890',
                     guests: 8,
-                    date: '2025-07-03',
+                    date: '2025-01-03',
                     time: '12:00',
                     notes: 'Business lunch meeting'
                 }
@@ -100,7 +154,8 @@ const Tables = () => {
                 features: ['Center Table'],
                 createdAt: new Date().getTime() - 432000000,
                 updatedAt: new Date().getTime() - 300000,
-                booking: null
+                bookings: [],
+                currentBooking: null
             }
         ];
         
