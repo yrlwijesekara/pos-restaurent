@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiUsers, FiClock, FiMapPin, FiCheck, FiX, FiEdit, FiTrash2 } from 'react-icons/fi';
 import { BiSolidDish } from 'react-icons/bi';
@@ -25,6 +25,56 @@ const TableCards = ({ table, onBook, onCancel, onEdit, onDelete }) => {
     features: table.features || []
   });
 
+  // Auto-check for booking time arrival
+  useEffect(() => {
+    const checkBookingTime = () => {
+      if (table.bookings && table.bookings.length > 0) {
+        const now = new Date();
+        const currentTime = now.getTime();
+        
+        table.bookings.forEach((booking, index) => {
+          const bookingDateTime = new Date(`${booking.date}T${booking.time}`);
+          const bookingTime = bookingDateTime.getTime();
+          const timeDiff = Math.abs(currentTime - bookingTime) / (1000 * 60); // difference in minutes
+          
+          // If booking time is within 15 minutes (before or after)
+          if (timeDiff <= 15 && booking.status === 'confirmed') {
+            // Show notification or auto-navigate
+            const shouldAutoNavigate = window.confirm(
+              `Table ${table.number}: ${booking.customerName}'s booking time has arrived (${formatTime(booking.time)}). Go to menu now?`
+            );
+            
+            if (shouldAutoNavigate) {
+              handleCustomerArrival(booking);
+            }
+          }
+        });
+      }
+    };
+
+    // Check immediately and then every minute
+    checkBookingTime();
+    const interval = setInterval(checkBookingTime, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [table.bookings]);
+
+  // Helper function to get current active booking
+  const getCurrentActiveBooking = () => {
+    if (!table.bookings || table.bookings.length === 0) return null;
+    
+    const now = new Date();
+    const currentTime = now.getTime();
+    
+    return table.bookings.find(booking => {
+      const bookingDateTime = new Date(`${booking.date}T${booking.time}`);
+      const bookingTime = bookingDateTime.getTime();
+      const timeDiff = Math.abs(currentTime - bookingTime) / (1000 * 60);
+      
+      return timeDiff <= 15; // Within 15 minutes
+    });
+  };
+
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
       case 'available':
@@ -39,14 +89,38 @@ const TableCards = ({ table, onBook, onCancel, onEdit, onDelete }) => {
   };
 
   const handleBooking = () => {
-    if (table.status === 'available') {
+    if (table.status === 'available' || (table.status === 'booked' && table.bookings)) {
       setShowBookingForm(true);
     }
   };
 
   const handleBookingSubmit = (e) => {
     e.preventDefault();
-    onBook(table.id, bookingData);
+    
+    // Check for time conflicts with existing bookings
+    if (table.bookings && table.bookings.length > 0) {
+      const selectedTime = new Date(`${bookingData.date}T${bookingData.time}`);
+      const conflictExists = table.bookings.some(booking => {
+        const bookingTime = new Date(`${booking.date}T${booking.time}`);
+        const timeDiff = Math.abs(selectedTime - bookingTime) / (1000 * 60); // difference in minutes
+        return timeDiff < 120; // 2-hour minimum gap between bookings
+      });
+      
+      if (conflictExists) {
+        alert('Time conflict! Please choose a time at least 2 hours apart from existing bookings.');
+        return;
+      }
+    }
+
+    // Add booking ID and status for multiple bookings
+    const newBooking = {
+      ...bookingData,
+      id: Date.now(),
+      status: 'confirmed',
+      createdAt: new Date().toISOString()
+    };
+
+    onBook(table.id, newBooking);
     setShowBookingForm(false);
     setBookingData({
       customerName: '',
@@ -176,13 +250,22 @@ const TableCards = ({ table, onBook, onCancel, onEdit, onDelete }) => {
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+              getCurrentActiveBooking() ? 'bg-green-600 animate-pulse' : 'bg-blue-600'
+            }`}>
               <FiMapPin className="text-white text-xl" />
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-white">
-                Table {table.number}
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl font-semibold text-white">
+                  Table {table.number}
+                </h3>
+                {getCurrentActiveBooking() && (
+                  <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
+                    🔔 Customer Time!
+                  </span>
+                )}
+              </div>
               <p className="text-gray-400 flex items-center">
                 <FiUsers className="mr-1" />
                 {table.capacity} seats
@@ -230,35 +313,138 @@ const TableCards = ({ table, onBook, onCancel, onEdit, onDelete }) => {
         </div>
 
         {/* Booking Info (if booked) */}
-        {table.status !== 'available' && table.currentBooking && (
+        {table.status !== 'available' && (table.currentBooking || table.bookings) && (
           <div className="bg-gray-900 rounded-lg p-4 mb-4">
-            <h4 className="text-white font-medium mb-2">Current Booking</h4>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Customer:</span>
-                <span className="text-white">{table.currentBooking.customerName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Phone:</span>
-                <span className="text-white">{table.currentBooking.phone}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Guests:</span>
-                <span className="text-white">{table.currentBooking.guests}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Time:</span>
-                <span className="text-white">
-                  {table.currentBooking.date} at {formatTime(table.currentBooking.time)}
-                </span>
-              </div>
-              {table.currentBooking.notes && (
-                <div className="mt-2">
-                  <span className="text-gray-400">Notes:</span>
-                  <p className="text-white mt-1">{table.currentBooking.notes}</p>
+            {/* Multiple Bookings Display */}
+            {table.bookings && table.bookings.length > 0 ? (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-white font-medium">Today's Bookings</h4>
+                  <span className="text-xs text-blue-400 bg-blue-900/30 px-2 py-1 rounded">
+                    {table.bookings.length} booking{table.bookings.length > 1 ? 's' : ''}
+                  </span>
                 </div>
-              )}
-            </div>
+                <div className="space-y-3 max-h-48 overflow-y-auto">
+                  {table.bookings
+                    .sort((a, b) => a.time.localeCompare(b.time))
+                    .map((booking, index) => {
+                      const now = new Date();
+                      const bookingDateTime = new Date(`${booking.date}T${booking.time}`);
+                      const timeDiff = Math.abs(now - bookingDateTime) / (1000 * 60); // difference in minutes
+                      
+                      const isActive = timeDiff <= 15 && booking.status === 'confirmed'; // Within 15 minutes
+                      const isPast = bookingDateTime < now && timeDiff > 15;
+                      const isUpcoming = bookingDateTime > now && timeDiff > 15;
+                      
+                      return (
+                        <div 
+                          key={booking.id || index} 
+                          className={`p-3 rounded-lg border-l-4 ${
+                            isActive 
+                              ? 'bg-green-900/30 border-green-400 ring-2 ring-green-400/50' 
+                              : isPast 
+                                ? 'bg-gray-800/50 border-gray-600' 
+                                : 'bg-blue-900/20 border-blue-500'
+                          }`}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-white font-medium">{booking.customerName}</span>
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                isActive 
+                                  ? 'bg-green-500 text-white animate-pulse' 
+                                  : isPast 
+                                    ? 'bg-gray-600 text-gray-300' 
+                                    : 'bg-blue-600 text-white'
+                              }`}>
+                                {isActive ? 'ARRIVED' : isPast ? 'Past' : 'Upcoming'}
+                              </span>
+                              {isActive && (
+                                <span className="text-xs text-green-400 animate-pulse">
+                                  🔔 Time Now!
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-gray-400">
+                                {formatTime(booking.time)}
+                              </span>
+                              {!isPast && (
+                                <button
+                                  onClick={() => onCancel(table.id, booking.id)}
+                                  className="p-1 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded transition-colors"
+                                  title="Delete booking"
+                                >
+                                  <FiTrash2 className="text-sm" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Phone:</span>
+                              <span className="text-white">{booking.phone}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Guests:</span>
+                              <span className="text-white">{booking.guests}</span>
+                            </div>
+                          </div>
+                          {booking.notes && (
+                            <div className="mt-2 text-xs">
+                              <span className="text-gray-400">Notes:</span>
+                              <p className="text-white mt-1">{booking.notes}</p>
+                            </div>
+                          )}
+                          {isActive && (
+                            <div className="mt-3 flex gap-2">
+                              <button
+                                onClick={() => handleCustomerArrival(booking)}
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-md font-medium transition-colors animate-pulse"
+                              >
+                                🍽️ Go to Menu
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              </>
+            ) : (
+              /* Single Booking Display (Backward Compatibility) */
+              table.currentBooking && (
+                <>
+                  <h4 className="text-white font-medium mb-2">Current Booking</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Customer:</span>
+                      <span className="text-white">{table.currentBooking.customerName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Phone:</span>
+                      <span className="text-white">{table.currentBooking.phone}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Guests:</span>
+                      <span className="text-white">{table.currentBooking.guests}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Time:</span>
+                      <span className="text-white">
+                        {table.currentBooking.date} at {formatTime(table.currentBooking.time)}
+                      </span>
+                    </div>
+                    {table.currentBooking.notes && (
+                      <div className="mt-2">
+                        <span className="text-gray-400">Notes:</span>
+                        <p className="text-white mt-1">{table.currentBooking.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )
+            )}
           </div>
         )}
 
@@ -283,30 +469,55 @@ const TableCards = ({ table, onBook, onCancel, onEdit, onDelete }) => {
             </>
           ) : table.status === 'booked' ? (
             <>
-              <button
-                onClick={() => onCancel(table.id)}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-1 text-sm"
-              >
-                <FiX className="text-lg" />
-                <span>Cancel</span>
-              </button>
-              {/* Customer Arrival Button */}
-              <button
-                onClick={() => handleCustomerArrival(table.currentBooking)}
-                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-1 text-sm"
-              >
-                <BiSolidDish className="text-lg" />
-                <span>Arrived</span>
-              </button>
+              {/* Show different buttons based on booking structure */}
+              {table.bookings && table.bookings.length > 0 ? (
+                /* Multiple bookings */
+                <>
+                  <button
+                    onClick={handleBooking}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-1 text-sm"
+                  >
+                    <FiCheck className="text-lg" />
+                    <span>Add Booking</span>
+                  </button>
+                  <button
+                    onClick={handleGoToMenu}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-1 text-sm"
+                  >
+                    <BiSolidDish className="text-lg" />
+                    <span>Menu</span>
+                  </button>
+                </>
+              ) : (
+                /* Single booking (backward compatibility) */
+                <>
+                  <button
+                    onClick={() => onCancel(table.id)}
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-1 text-sm"
+                  >
+                    <FiX className="text-lg" />
+                    <span>Cancel</span>
+                  </button>
+                  <button
+                    onClick={() => handleCustomerArrival(table.currentBooking)}
+                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-1 text-sm"
+                  >
+                    <BiSolidDish className="text-lg" />
+                    <span>Arrived</span>
+                  </button>
+                </>
+              )}
             </>
           ) : table.status === 'occupied' ? (
-            <button
-              onClick={handleWalkInOrder}
-              className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-1 text-sm"
-            >
-              <BiSolidDish className="text-lg" />
-              <span>Order</span>
-            </button>
+            table.number !== '3' && (
+              <button
+                onClick={handleWalkInOrder}
+                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-1 text-sm"
+              >
+                <BiSolidDish className="text-lg" />
+                <span>Order</span>
+              </button>
+            )
           ) : (
             <button
               disabled
@@ -360,9 +571,35 @@ const TableCards = ({ table, onBook, onCancel, onEdit, onDelete }) => {
       {/* Booking Form Modal */}
       {showBookingForm && (
         <div className="border-t border-gray-700 bg-gray-900 p-6">
-          <h4 className="text-white font-medium mb-4">Book Table {table.number}</h4>
+          <h4 className="text-white font-medium mb-4">
+            {table.bookings && table.bookings.length > 0 ? 
+              `Add New Booking - Table ${table.number}` : 
+              `Book Table ${table.number}`
+            }
+          </h4>
+          
+          {/* Show existing bookings for today */}
+          {table.bookings && table.bookings.length > 0 && (
+            <div className="mb-4 p-3 bg-blue-900/20 rounded-lg border border-blue-700">
+              <h5 className="text-blue-400 font-medium mb-2">Existing Bookings Today:</h5>
+              <div className="space-y-1">
+                {table.bookings
+                  .filter(booking => booking.date === new Date().toISOString().split('T')[0])
+                  .sort((a, b) => a.time.localeCompare(b.time))
+                  .map((booking, index) => (
+                    <div key={index} className="text-sm text-gray-300 flex justify-between">
+                      <span>{formatTime(booking.time)} - {booking.customerName}</span>
+                      <span>{booking.guests} guests</span>
+                    </div>
+                  ))}
+              </div>
+              <p className="text-xs text-yellow-400 mt-2">
+                ⚠️ Please maintain at least 2 hours between bookings
+              </p>
+            </div>
+          )}
+          
           <form onSubmit={handleBookingSubmit} className="space-y-4">
-            {/* ...existing booking form code... */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-gray-400 text-sm mb-1">Customer Name</label>
@@ -404,6 +641,7 @@ const TableCards = ({ table, onBook, onCancel, onEdit, onDelete }) => {
                 <input
                   type="date"
                   required
+                  min={new Date().toISOString().split('T')[0]}
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={bookingData.date}
                   onChange={(e) => setBookingData({...bookingData, date: e.target.value})}
@@ -437,7 +675,7 @@ const TableCards = ({ table, onBook, onCancel, onEdit, onDelete }) => {
                 type="submit"
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
               >
-                Confirm Booking
+                {table.bookings && table.bookings.length > 0 ? 'Add Booking' : 'Confirm Booking'}
               </button>
               <button
                 type="button"

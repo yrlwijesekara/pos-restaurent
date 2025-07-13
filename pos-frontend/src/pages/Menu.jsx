@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
-import { BiSolidDish, BiSearch } from 'react-icons/bi';
-import { IoAdd, IoRemove } from 'react-icons/io5';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FiPlus, FiMinus, FiShoppingCart, FiArrowLeft, FiTrash2 } from 'react-icons/fi';
+import { BiSolidDish } from 'react-icons/bi';
+import { IoCheckmarkCircle } from 'react-icons/io5';
 
 const Menu = () => {
+  const navigate = useNavigate();
+  const [selectedItems, setSelectedItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [orderTotal, setOrderTotal] = useState(0);
 
   const categories = ['All', 'Appetizers', 'Main Course', 'Desserts', 'Beverages'];
 
@@ -43,7 +48,7 @@ const Menu = () => {
       category: 'Beverages',
       description: 'Freshly squeezed orange juice',
       image: '🥤',
-      available: false
+      available: true
     },
     {
       id: 5,
@@ -62,112 +67,339 @@ const Menu = () => {
       description: 'Crispy bread with garlic butter',
       image: '🍞',
       available: true
+    },
+    {
+      id: 7,
+      name: 'Pasta Carbonara',
+      price: 16.99,
+      category: 'Main Course',
+      description: 'Creamy pasta with bacon and parmesan',
+      image: '🍝',
+      available: true
+    },
+    {
+      id: 8,
+      name: 'Ice Cream',
+      price: 6.50,
+      category: 'Desserts',
+      description: 'Vanilla ice cream with toppings',
+      image: '🍦',
+      available: true
+    },
+    {
+      id: 9,
+      name: 'Coffee',
+      price: 4.99,
+      category: 'Beverages',
+      description: 'Freshly brewed coffee',
+      image: '☕',
+      available: false
+    },
+    {
+      id: 10,
+      name: 'Fish & Chips',
+      price: 19.99,
+      category: 'Main Course',
+      description: 'Beer-battered fish with crispy chips',
+      image: '🐟',
+      available: true
     }
   ];
 
+  // Filter menu items
   const filteredItems = menuItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const handleAddToOrder = (item) => {
-    console.log('Added to order:', item);
-    // Here you would typically dispatch to a cart/order state
+  // Calculate total when selected items change
+  useEffect(() => {
+    const total = selectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    setOrderTotal(total);
+  }, [selectedItems]);
+
+  const addToOrder = (menuItem) => {
+    setSelectedItems(prev => {
+      const existingItem = prev.find(item => item.id === menuItem.id);
+      if (existingItem) {
+        return prev.map(item =>
+          item.id === menuItem.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      } else {
+        return [...prev, { ...menuItem, quantity: 1 }];
+      }
+    });
+  };
+
+  const removeFromOrder = (menuItemId) => {
+    setSelectedItems(prev => {
+      const existingItem = prev.find(item => item.id === menuItemId);
+      if (existingItem && existingItem.quantity > 1) {
+        return prev.map(item =>
+          item.id === menuItemId
+            ? { ...item, quantity: item.quantity - 1 }
+            : item
+        );
+      } else {
+        return prev.filter(item => item.id !== menuItemId);
+      }
+    });
+  };
+
+  const removeItemCompletely = (menuItemId) => {
+    setSelectedItems(prev => prev.filter(item => item.id !== menuItemId));
+  };
+
+  const getItemQuantity = (menuItemId) => {
+    const item = selectedItems.find(item => item.id === menuItemId);
+    return item ? item.quantity : 0;
+  };
+
+  const handlePlaceOrder = () => {
+    if (selectedItems.length === 0) {
+      alert('Please select items to place order');
+      return;
+    }
+
+    alert(`Order placed successfully! Total: $${orderTotal.toFixed(2)}`);
+    setSelectedItems([]);
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 pb-20">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center mb-4">
-          <BiSolidDish className="text-3xl text-blue-400 mr-3" />
-          <h1 className="text-3xl font-bold">Menu</h1>
-        </div>
-        
-        {/* Search Bar */}
-        <div className="relative mb-4">
-          <BiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
-          <input
-            type="text"
-            placeholder="Search menu items..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-          />
-        </div>
-
-        {/* Category Filter */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {categories.map((category) => (
+    <div className="min-h-screen bg-black text-white flex">
+      {/* Left Side - Menu Items */}
+      <div className="flex-1 p-6 overflow-y-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
             <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors duration-200 ${
-                selectedCategory === category
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-              }`}
+              onClick={() => navigate(-1)}
+              className="p-3 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors"
             >
-              {category}
+              <FiArrowLeft className="text-xl" />
             </button>
-          ))}
-        </div>
-      </div>
+            <h1 className="text-3xl font-bold">Menu</h1>
+            <div className="w-12 h-12" />
+          </div>
 
-      {/* Menu Items Grid */}
-      <div className="grid gap-4">
-        {filteredItems.map((item) => (
-          <div
-            key={item.id}
-            className={`bg-gray-900 rounded-xl border border-gray-800 p-4 ${
-              !item.available ? 'opacity-50' : ''
-            }`}
-          >
-            <div className="flex items-start gap-4">
-              {/* Item Image/Emoji */}
-              <div className="text-4xl">{item.image}</div>
-              
-              {/* Item Details */}
-              <div className="flex-1">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-lg font-semibold text-white">{item.name}</h3>
-                  <span className="text-xl font-bold text-green-400">${item.price}</span>
-                </div>
-                
-                <p className="text-sm text-gray-400 mb-2">{item.description}</p>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-xs px-2 py-1 bg-gray-800 rounded-full text-gray-300">
-                    {item.category}
-                  </span>
+          {/* Search Bar */}
+          <div className="relative mb-4">
+            <input
+              type="text"
+              placeholder="Search menu items..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-4 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+
+          {/* Category Filter */}
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors duration-200 ${
+                  selectedCategory === category
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Menu Items Grid */}
+        <div className="grid gap-4 lg:grid-cols-1">
+          {filteredItems.map((item) => {
+            const quantity = getItemQuantity(item.id);
+            return (
+              <div
+                key={item.id}
+                className={`bg-gray-800 rounded-xl p-4 border transition-all duration-200 transform hover:scale-[1.02] ${
+                  item.available 
+                    ? 'border-gray-700 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/20' 
+                    : 'border-gray-800 opacity-60'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  {/* Item Image */}
+                  <div className="text-5xl bg-gray-900 rounded-lg p-3 flex items-center justify-center min-w-[80px] h-[80px]">
+                    {item.image}
+                  </div>
                   
-                  {item.available ? (
-                    <button
-                      onClick={() => handleAddToOrder(item)}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-200"
-                    >
-                      <IoAdd className="text-lg" />
-                      <span className="font-medium">Add</span>
-                    </button>
-                  ) : (
-                    <span className="text-sm text-red-400 font-medium">Unavailable</span>
-                  )}
+                  {/* Item Details */}
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between mb-1">
+                      <h3 className="text-lg font-semibold text-white">
+                        {item.name}
+                      </h3>
+                      {quantity > 0 && (
+                        <span className="bg-green-600 text-white text-xs px-2 py-1 rounded-full font-medium">
+                          {quantity} in cart
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-gray-400 text-sm mb-2">
+                      {item.description}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xl font-bold text-green-400">
+                        ${item.price.toFixed(2)}
+                      </p>
+                      <span className="text-xs text-gray-500 bg-gray-700 px-2 py-1 rounded">
+                        {item.category}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Add/Remove Controls */}
+                  <div className="flex items-center gap-3">
+                    {item.available ? (
+                      quantity > 0 ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => removeFromOrder(item.id)}
+                            className="w-8 h-8 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center transition-colors"
+                          >
+                            <FiMinus className="text-sm" />
+                          </button>
+                          <span className="text-lg font-semibold min-w-[2rem] text-center">
+                            {quantity}
+                          </span>
+                          <button
+                            onClick={() => addToOrder(item)}
+                            className="w-8 h-8 bg-green-600 hover:bg-green-700 rounded-full flex items-center justify-center transition-colors"
+                          >
+                            <FiPlus className="text-sm" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => addToOrder(item)}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                        >
+                          <FiPlus className="text-lg" />
+                          <span className="font-medium">Add</span>
+                        </button>
+                      )
+                    ) : (
+                      <span className="text-sm text-red-400 font-medium">Unavailable</span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            );
+          })}
+        </div>
+
+        {/* Empty State */}
+        {filteredItems.length === 0 && (
+          <div className="text-center py-12">
+            <BiSolidDish className="text-6xl text-gray-600 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-400 mb-2">No items found</h3>
+            <p className="text-gray-500">Try adjusting your search or filter</p>
           </div>
-        ))}
+        )}
       </div>
 
-      {/* Empty State */}
-      {filteredItems.length === 0 && (
-        <div className="text-center py-12">
-          <BiSolidDish className="text-6xl text-gray-600 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-400 mb-2">No items found</h3>
-          <p className="text-gray-500">Try adjusting your search or filter</p>
+      {/* Right Side - Selected Items & Bill */}
+      <div className="w-96 bg-gradient-to-b from-gray-900 to-gray-800 border-l border-gray-700 p-6 overflow-y-auto shadow-2xl">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="bg-blue-600 p-2 rounded-lg">
+            <FiShoppingCart className="text-xl text-white" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold">Order Summary</h2>
+            <p className="text-sm text-gray-400">Selected Items</p>
+          </div>
         </div>
-      )}
+
+        {selectedItems.length === 0 ? (
+          <div className="text-center py-12">
+            <FiShoppingCart className="text-4xl text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-400">No items selected</p>
+            <p className="text-sm text-gray-500 mt-2">Add items from the menu to get started</p>
+          </div>
+        ) : (
+          <>
+            {/* Selected Items List */}
+            <div className="space-y-3 mb-6">
+              {selectedItems.map((item) => (
+                <div key={item.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-colors">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{item.image}</span>
+                      <div>
+                        <h4 className="font-semibold text-white">{item.name}</h4>
+                        <p className="text-xs text-gray-400">${item.price.toFixed(2)} each</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => removeItemCompletely(item.id)}
+                      className="text-red-400 hover:text-red-300 p-1 rounded transition-colors"
+                      title="Remove from order"
+                    >
+                      <FiTrash2 className="text-sm" />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 bg-gray-700 rounded-lg p-1">
+                      <button
+                        onClick={() => removeFromOrder(item.id)}
+                        className="w-7 h-7 bg-red-600 hover:bg-red-700 rounded-md flex items-center justify-center transition-colors"
+                      >
+                        <FiMinus className="text-xs" />
+                      </button>
+                      <span className="text-sm font-medium min-w-[2rem] text-center text-white">
+                        {item.quantity}
+                      </span>
+                      <button
+                        onClick={() => addToOrder(item)}
+                        className="w-7 h-7 bg-green-600 hover:bg-green-700 rounded-md flex items-center justify-center transition-colors"
+                      >
+                        <FiPlus className="text-xs" />
+                      </button>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-green-400 text-lg">
+                        ${(item.price * item.quantity).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Order Summary */}
+            <div className="border-t border-gray-700 pt-4 mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-lg font-semibold">Total:</span>
+                <span className="text-2xl font-bold text-green-400">
+                  ${orderTotal.toFixed(2)}
+                </span>
+              </div>
+              <div className="text-sm text-gray-400 mb-4">
+                {selectedItems.reduce((sum, item) => sum + item.quantity, 0)} item(s)
+              </div>
+            </div>
+
+            {/* Place Order Button */}
+            <button
+              onClick={handlePlaceOrder}
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-semibold py-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <IoCheckmarkCircle className="text-xl" />
+              Place Order
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 };

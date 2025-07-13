@@ -210,19 +210,48 @@ const Tables = () => {
     };
 
     const handleBookTable = (tableId, bookingData) => {
-        setTables(tables.map(table => 
-            table.id === tableId 
-                ? { ...table, status: 'booked', booking: bookingData, updatedAt: new Date().getTime() }
-                : table
-        ));
+        setTables(tables.map(table => {
+            if (table.id === tableId) {
+                const updatedBookings = table.bookings ? [...table.bookings, bookingData] : [bookingData];
+                return { 
+                    ...table, 
+                    status: 'booked', 
+                    bookings: updatedBookings,
+                    currentBooking: bookingData, // Keep for backward compatibility
+                    updatedAt: new Date().getTime() 
+                };
+            }
+            return table;
+        }));
     };
 
-    const handleCancelBooking = (tableId) => {
-        setTables(tables.map(table => 
-            table.id === tableId 
-                ? { ...table, status: 'available', booking: null, updatedAt: new Date().getTime() }
-                : table
-        ));
+    const handleCancelBooking = (tableId, bookingId = null) => {
+        setTables(tables.map(table => {
+            if (table.id === tableId) {
+                if (bookingId) {
+                    // Cancel specific booking
+                    const updatedBookings = table.bookings.filter(booking => booking.id !== bookingId);
+                    const newStatus = updatedBookings.length > 0 ? 'booked' : 'available';
+                    return { 
+                        ...table, 
+                        status: newStatus,
+                        bookings: updatedBookings,
+                        currentBooking: updatedBookings.length > 0 ? updatedBookings[0] : null,
+                        updatedAt: new Date().getTime() 
+                    };
+                } else {
+                    // Cancel all bookings (backward compatibility)
+                    return { 
+                        ...table, 
+                        status: 'available', 
+                        bookings: [],
+                        currentBooking: null, 
+                        updatedAt: new Date().getTime() 
+                    };
+                }
+            }
+            return table;
+        }));
     };
 
     const handleEditTable = (tableId, editData) => {
